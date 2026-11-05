@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Szeretlek mini manóm❤️</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cormorant Garamond, Great Vibes, Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --env-width: min(86vw, 370px);
+      --env-height: calc(var(--env-width) * 0.70);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow: hidden;
+    }
+
+    .font-script {
+      font-family: 'Great Vibes', cursive;
+    }
+
+    .font-serif-display {
+      font-family: 'Cormorant Garamond', serif;
+    }
+
+    /* Fő színpad - tisztán fekete háttérrel */
+    .stage-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #000000;
+    }
+
+    /* Boríték konténer */
+    .envelope-scene {
+      position: relative;
+      width: var(--env-width);
+      height: var(--env-height);
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      cursor: pointer;
+    }
+
+    /* Kicsúszás közben a boríték lejjebb mozdul, hogy a teljesen kiemelkedő lap beférjen */
+    .envelope-scene.scene-pullout {
+      transform: translateY(min(18vh, 105px));
+    }
+
+    /* Miután a lap teljesen kijött és a boríték elé került, középre igazodik */
+    .envelope-scene.scene-open {
+      transform: translateY(22px);
+    }
+
+    /* 1. RÉTEG: Boríték hátlap és belső tér */
+    .envelope-back {
+      position: absolute;
+      inset: 0;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #14110f 0%, #1d1814 100%);
+      border: 1.5px solid #c9a449;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95);
+      z-index: 1;
+    }
+
+    /* 2. RÉTEG: A kicsúszó levél / kártya (zárt állapotban 100%-ig a borítékon belül) */
+    .letter-card {
+      position: absolute;
+      left: 6%;
+      width: 88%;
+      height: 88%;
+      bottom: 6%;
+      background: linear-gradient(165deg, #fffdf9 0%, #f6efe2 100%);
+      border-radius: 10px;
+      border: 1.5px solid #c9a449;
+      box-shadow:
+        0 10px 28px rgba(0, 0, 0, 0.75),
+        inset 0 0 0 3px #fffdf9,
+        inset 0 0 0 4px rgba(201, 164, 73, 0.45);
+      z-index: 2;
+      transform: translateY(0) scale(1);
+      opacity: 0;
+      pointer-events: none;
+      transition:
+        transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.55s ease,
+        opacity 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px 16px 12px 16px;
+      color: #2c221e;
+      overflow: hidden;
+    }
+
+    /* Amikor a boríték nyílik, a kártya láthatóvá válik a zsebben */
+    .letter-card.card-visible {
+      opacity: 1;
+    }
+
+    /* 1. fázis: A kártya 100%-ban kiemelkedik a boríték zsebéből a felső él fölé */
+    .letter-card.card-extracted {
+      transform: translateY(-108%) scale(1);
+      opacity: 1;
+    }
+
+    /* Rétegváltás: a boríték zsebe elé kerül */
+    .letter-card.card-front-z {
+      z-index: 12;
+      pointer-events: auto;
+    }
+
+    /* 2. fázis: A teljesen kivett kártya a boríték elé ereszkedik, így semmi sem takarja */
+    .letter-card.card-presented {
+      transform: translateY(-14%) scale(1.04);
+      box-shadow:
+        0 22px 48px rgba(0, 0, 0, 0.92),
+        inset 0 0 0 3px #fffdf9,
+        inset 0 0 0 4px rgba(201, 164, 73, 0.45);
+      opacity: 1;
+    }
+
+    /* 3. RÉTEG: Boríték elülső zseb (SVG a tűéles szegélyekért) */
+    .envelope-pocket {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    /* 4. RÉTEG: Felső nyitható háromszög fül */
+    .envelope-flap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 58%;
+      transform-origin: top center;
+      transform: perspective(1200px) rotateX(0deg);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    .envelope-flap.flap-open {
+      transform: perspective(1200px) rotateX(180deg);
+    }
+
+    .envelope-flap.flap-behind {
+      z-index: 1;
+    }
+
+    /* 5. RÉTEG: Viaszpecsét középen (statikus, nem pulzál) */
+    .wax-seal-wrapper {
+      position: absolute;
+      top: 55%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 8;
+      transition: transform 0.3s ease, opacity 0.25s ease;
+      pointer-events: none;
+    }
+
+    .wax-seal-wrapper.seal-hidden {
+      transform: translate(-50%, -50%) scale(0.5);
+      opacity: 0;
+    }
+
+    .wax-seal {
+      width: 52px;
+      height: 52px;
+      border-radius: 9999px;
+      background: radial-gradient(circle at 35% 30%, #b8202b 0%, #8f161f 60%, #590b11 100%);
+      border: 1.5px solid #d4af37;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Visszaszámláló dobozok a kártyán */
+    .countdown-box {
+      background: #1f1916;
+      border: 1px solid #c9a449;
+      border-radius: 7px;
+      padding: 4px 2px;
+      color: #fdfbf7;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .countdown-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: #f3dc95;
+      line-height: 1.05;
+    }
+
+    .countdown-label {
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #d6c7b2;
+      margin-top: 1px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fő interaktív színpad (kizárólag a boríték) -->
+  <main class="stage-wrapper px-4">
+
+    <div id="envelope-scene" class="envelope-scene" role="button" tabindex="0" aria-label="Boríték">
+
+      <!-- 1. Hátlap -->
+      <div class="envelope-back"></div>
+
+      <!-- 2. A Kicsúszó Lap (Levél) - teljes felülete látható -->
+      <article id="letter-card" class="letter-card" aria-live="polite">
+        <!-- Fő Szerelmes Üzenet (I love you) -->
+        <div class="text-center pt-0.5">
+          <div class="flex items-center justify-center gap-2 mb-1">
+            <span class="w-7 h-[1px] bg-amber-800/35"></span>
+            <svg class="w-3.5 h-3.5 text-[#8c1820]" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            <span class="w-7 h-[1px] bg-amber-800/35"></span>
+          </div>
+
+          <h1 class="font-script text-3xl sm:text-4xl text-[#8c1820] leading-none py-0.5">
+            I love you
+          </h1>
+          <p class="font-serif-display italic text-xs sm:text-sm text-stone-700 mt-1 leading-tight">
+            Minden egyes pillanatban, ma és mindörökké.
+          </p>
+        </div>
+
+        <!-- Évtől Független Karácsonyi Visszaszámláló -->
+        <div class="bg-[#efe6d5]/90 border border-amber-800/25 rounded-lg p-2.5">
+          <p id="countdown-heading" class="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-stone-800 text-center mb-1.5">
+            Karácsonyig hátralévő idő:
+          </p>
+
+          <div class="grid grid-cols-4 gap-1.5">
+            <div class="countdown-box">
+              <span id="cd-days" class="countdown-number text-lg sm:text-xl">00</span>
+              <span class="countdown-label">Nap</span>
+            </div>
+            <div class="countdown-box">
+              <span id="cd-hours" class="countdown-number text-lg sm:text-xl">00</span>
+              <span class="countdown-label">Óra</span>
+            </div>
+            <div class="countdown-box">
+              <span id="cd-mins" class="countdown-number text-lg sm:text-xl">00</span>
+              <span class="countdown-label">Perc</span>
+            </div>
+            <div class="countdown-box">
+              <span id="cd-secs" class="countdown-number text-lg sm:text-xl">00</span>
+              <span class="countdown-label">Mp</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Finom alsó díszítő lezárás -->
+        <div class="flex items-center justify-center gap-2 text-amber-800/45">
+          <span class="w-5 h-[1px] bg-amber-800/25"></span>
+          <span class="text-[10px] leading-none">✦</span>
+          <span class="w-5 h-[1px] bg-amber-800/25"></span>
+        </div>
+      </article>
+
+      <!-- 3. Boríték Elülső Zseb (éles arany kerettel) -->
+      <div class="envelope-pocket">
+        <svg class="w-full h-full" viewBox="0 0 380 266" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="sideFlapLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#26201a" />
+              <stop offset="100%" stop-color="#1b1612" />
+            </linearGradient>
+            <linearGradient id="sideFlapRight" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#26201a" />
+              <stop offset="100%" stop-color="#1b1612" />
+            </linearGradient>
+            <linearGradient id="bottomFlap" x1="50%" y1="0%" x2="50%" y2="100%">
+              <stop offset="0%" stop-color="#2d251e" />
+              <stop offset="100%" stop-color="#1e1814" />
+            </linearGradient>
+          </defs>
+
+          <!-- Bal oldali hajtás -->
+          <polygon
+            points="0,0 190,142 0,266"
+            fill="url(#sideFlapLeft)"
+            stroke="#c9a449"
+            stroke-width="1.5"
+          />
+
+          <!-- Jobb oldali hajtás -->
+          <polygon
+            points="380,0 190,142 380,266"
+            fill="url(#sideFlapRight)"
+            stroke="#c9a449"
+            stroke-width="1.5"
+          />
+
+          <!-- Alsó hajtás -->
+          <polygon
+            points="0,266 190,126 380,266"
+            fill="url(#bottomFlap)"
+            stroke="#c9a449"
+            stroke-width="1.6"
+          />
+
+          <!-- Külső keret -->
+          <rect
+            x="0.75" y="0.75" width="378.5" height="264.5" rx="10" ry="10"
+            fill="none"
+            stroke="#c9a449"
+            stroke-width="1.6"
+          />
+        </svg>
+      </div>
+
+      <!-- 4. Felső Nyitható Fül -->
+      <div id="envelope-flap" class="envelope-flap">
+        <svg class="w-full h-full" viewBox="0 0 380 154" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="topFlap" x1="50%" y1="0%" x2="50%" y2="100%">
+              <stop offset="0%" stop-color="#221c16" />
+              <stop offset="100%" stop-color="#322920" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M 0,0 L 380,0 L 202,144 Q 190,153 178,144 Z"
+            fill="url(#topFlap)"
+            stroke="#c9a449"
+            stroke-width="1.8"
+          />
+        </svg>
+      </div>
+
+      <!-- 5. Viaszpecsét Szívvel -->
+      <div id="wax-seal-wrapper" class="wax-seal-wrapper">
+        <div class="wax-seal">
+          <svg class="w-5 h-5 text-[#f3dc95]" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const state = {
+      isOpen: false,
+      isAnimating: false
+    };
+
+    const envelopeScene = document.getElementById('envelope-scene');
+    const envelopeFlap = document.getElementById('envelope-flap');
+    const letterCard = document.getElementById('letter-card');
+    const waxSealWrapper = document.getElementById('wax-seal-wrapper');
+
+    const cdDays = document.getElementById('cd-days');
+    const cdHours = document.getElementById('cd-hours');
+    const cdMins = document.getElementById('cd-mins');
+    const cdSecs = document.getElementById('cd-secs');
+    const countdownHeading = document.getElementById('countdown-heading');
+
+    let timers = [];
+    function clearAnimationTimers() {
+      timers.forEach(t => clearTimeout(t));
+      timers = [];
+    }
+
+    function toggleEnvelope() {
+      if (state.isAnimating) return;
+      state.isAnimating = true;
+      clearAnimationTimers();
+
+      if (!state.isOpen) {
+        openEnvelope();
+      } else {
+        closeEnvelope();
+      }
+    }
+
+    function openEnvelope() {
+      state.isOpen = true;
+
+      // A kártya láthatóvá válik a zsebben, de még teljesen bent van
+      letterCard.classList.add('card-visible');
+
+      // 1. lépés: Pecsét eltűnik és a felső fül felnyílik
+      waxSealWrapper.classList.add('seal-hidden');
+      envelopeFlap.classList.add('flap-open');
+
+      // 2. lépés: A lap teljesen kicsúszik felfelé a boríték zsebéből (a felső él fölé)
+      timers.push(setTimeout(() => {
+        envelopeFlap.classList.add('flap-behind');
+        envelopeScene.classList.add('scene-pullout');
+        letterCard.classList.add('card-extracted');
+      }, 260));
+
+      // 3. lépés: Miután teljesen kiemelkedett, a boríték elé kerül és középre ereszkedik
+      timers.push(setTimeout(() => {
+        letterCard.classList.add('card-front-z');
+        letterCard.classList.add('card-presented');
+        envelopeScene.classList.remove('scene-pullout');
+        envelopeScene.classList.add('scene-open');
+      }, 820));
+
+      timers.push(setTimeout(() => {
+        state.isAnimating = false;
+      }, 1380));
+    }
+
+    function closeEnvelope() {
+      state.isOpen = false;
+
+      // 1. lépés: A lap visszaemelkedik a boríték felső éle fölé
+      letterCard.classList.remove('card-presented');
+      envelopeScene.classList.remove('scene-open');
+      envelopeScene.classList.add('scene-pullout');
+
+      // 2. lépés: A lap visszakerül a zseb rétegébe és visszacsúszik a borítékba
+      timers.push(setTimeout(() => {
+        letterCard.classList.remove('card-front-z');
+        letterCard.classList.remove('card-extracted');
+        envelopeScene.classList.remove('scene-pullout');
+      }, 520));
+
+      // 3. lépés: Miután a lap teljesen bent van, a felső fül visszazáródik
+      timers.push(setTimeout(() => {
+        envelopeFlap.classList.remove('flap-behind');
+        envelopeFlap.classList.remove('flap-open');
+      }, 1020));
+
+      // 4. lépés: A viaszpecsét visszatér
+      timers.push(setTimeout(() => {
+        waxSealWrapper.classList.remove('seal-hidden');
+        letterCard.classList.remove('card-visible');
+        state.isAnimating = false;
+      }, 1450));
+    }
+
+    envelopeScene.addEventListener('click', toggleEnvelope);
+    envelopeScene.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleEnvelope();
+      }
+    });
+
+    // Évtől független karácsonyi visszaszámláló (mindig december 24. 00:00-ig)
+    function pad2(num) {
+      return String(num).padStart(2, '0');
+    }
+
+    function updateChristmasCountdown() {
+      const now = new Date();
+      let targetYear = now.getFullYear();
+      let targetDate = new Date(targetYear, 11, 24, 0, 0, 0, 0);
+
+      if (now.getTime() >= targetDate.getTime()) {
+        targetYear += 1;
+        targetDate = new Date(targetYear, 11, 24, 0, 0, 0, 0);
+      }
+
+      const diffMs = Math.max(0, targetDate.getTime() - now.getTime());
+      const totalSeconds = Math.floor(diffMs / 1000);
+
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const mins = Math.floor((totalSeconds % 3600) / 60);
+      const secs = totalSeconds % 60;
+
+      cdDays.textContent = pad2(days);
+      cdHours.textContent = pad2(hours);
+      cdMins.textContent = pad2(mins);
+      cdSecs.textContent = pad2(secs);
+
+      const isChristmas = (now.getMonth() === 11 && (now.getDate() === 24 || now.getDate() === 25 || now.getDate() === 26));
+      countdownHeading.textContent = isChristmas
+        ? `Boldog Karácsonyt! (${targetYear}-ig):`
+        : 'Karácsonyig hátralévő idő:';
+    }
+
+    window.onload = function () {
+      updateChristmasCountdown();
+      setInterval(updateChristmasCountdown, 1000);
+    };
+  </script>
+</body>
+</html>
